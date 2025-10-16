@@ -126,7 +126,7 @@ export default function StudentChatbotPage() {
                 placeholder="Ask me anything about your studies..."
                 className="flex-1"
               />
-              <Button onClick={handleSend} disabled={!input.trim()} className="bg-secondary hover:bg-secondary/90">
+              <Button onClick={handleSend} disabled={!input.trim()} className="bg-primary hover:bg-primary/90 cursor-pointer">
                 <Send className="h-4 w-4" />
               </Button>
             </div>

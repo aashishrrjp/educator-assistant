@@ -281,7 +281,7 @@ export default function GradingPage() {
                   </p>
                 </div>
                 <div className="p-4 rounded-lg border border-border">
-                  <FileText className="h-8 w-8 text-secondary mb-3" />
+                  <FileText className="h-8 w-8 text-primary mb-3" />
                   <h4 className="font-semibold mb-2">OCR Support</h4>
                   <p className="text-sm text-muted-foreground">
                     Extract text from handwritten submissions for easier grading and analysis.

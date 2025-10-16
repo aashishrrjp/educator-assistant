@@ -1,14 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { GraduationCap, ArrowLeft } from "lucide-react"
+import { GraduationCap, ArrowLeft, AlertCircle } from "lucide-react"
 
 export default function TeacherSignUpPage() {
   const router = useRouter()
@@ -19,11 +18,38 @@ export default function TeacherSignUpPage() {
     school: "",
     subjects: "",
   })
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Mock registration - redirect to teacher dashboard
-    router.push("/teacher/dashboard")
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // CHANGE THIS LINE:
+        body: JSON.stringify({
+          ...formData, // Send all form data
+          role: 'TEACHER',
+        }),
+      });
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create account. Please try again.')
+      }
+
+      // On success, redirect to the sign-in page
+      router.push('/sign-in')
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -41,7 +67,7 @@ export default function TeacherSignUpPage() {
           <div className="text-center">
             <Link href="/" className="inline-flex items-center gap-2 mb-6">
               <GraduationCap className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">EduAssist</span>
+              <span className="text-xl font-bold">SetuNova</span>
             </Link>
             <h1 className="text-3xl font-bold mb-2">Create Teacher Account</h1>
             <p className="text-muted-foreground">Start automating your teaching workflow</p>
@@ -51,6 +77,7 @@ export default function TeacherSignUpPage() {
         {/* Sign Up Form */}
         <div className="bg-card border border-border rounded-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name Input */}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -59,9 +86,10 @@ export default function TeacherSignUpPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                disabled={isSubmitting}
               />
             </div>
-
+            {/* Email Input */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -71,9 +99,10 @@ export default function TeacherSignUpPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
+                disabled={isSubmitting}
               />
             </div>
-
+            {/* School Input */}
             <div className="space-y-2">
               <Label htmlFor="school">School/Institution</Label>
               <Input
@@ -82,9 +111,10 @@ export default function TeacherSignUpPage() {
                 value={formData.school}
                 onChange={(e) => setFormData({ ...formData, school: e.target.value })}
                 required
+                disabled={isSubmitting}
               />
             </div>
-
+            {/* Subjects Input */}
             <div className="space-y-2">
               <Label htmlFor="subjects">Subjects (comma separated)</Label>
               <Input
@@ -93,9 +123,10 @@ export default function TeacherSignUpPage() {
                 value={formData.subjects}
                 onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
                 required
+                disabled={isSubmitting}
               />
             </div>
-
+            {/* Password Input */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -105,11 +136,24 @@ export default function TeacherSignUpPage() {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
+                disabled={isSubmitting}
               />
             </div>
-
-            <Button type="submit" className="w-full" size="lg">
-              Create Account
+            {/* Error Message Display */}
+            {error && (
+              <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <span>{error}</span>
+              </div>
+            )}
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90"
+              size="lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 

@@ -43,10 +43,10 @@ export default function LearningToolsPage() {
             {/* Video Generator */}
             <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
               <DialogTrigger asChild>
-                <Card className="hover:border-secondary/50 transition-colors cursor-pointer">
+                <Card className="hover:border-primary/50 transition-colors cursor-pointer">
                   <CardContent className="pt-6">
-                    <div className="h-12 w-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-4">
-                      <Video className="h-6 w-6 text-secondary" />
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Video className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">Video Explainer</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -103,7 +103,7 @@ export default function LearningToolsPage() {
             </Dialog>
 
             {/* Visual Generator */}
-            <Card className="hover:border-secondary/50 transition-colors cursor-pointer">
+            <Card className="hover:border-primary/50 transition-colors cursor-pointer">
               <CardContent className="pt-6">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <ImageIcon className="h-6 w-6 text-primary" />
@@ -118,10 +118,10 @@ export default function LearningToolsPage() {
             {/* Translator */}
             <Dialog open={showTranslateDialog} onOpenChange={setShowTranslateDialog}>
               <DialogTrigger asChild>
-                <Card className="hover:border-secondary/50 transition-colors cursor-pointer">
+                <Card className="hover:border-primary/50 transition-colors cursor-pointer">
                   <CardContent className="pt-6">
-                    <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                      <Languages className="h-6 w-6 text-accent" />
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Languages className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">Multilingual Support</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -192,10 +192,10 @@ export default function LearningToolsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg border border-border hover:border-secondary/50 transition-colors cursor-pointer">
+                <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
                   <div className="flex items-start gap-4">
-                    <div className="h-16 w-16 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                      <Video className="h-8 w-8 text-secondary" />
+                    <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Video className="h-8 w-8 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold mb-1">Quadratic Formula Explained</h4>
@@ -223,10 +223,10 @@ export default function LearningToolsPage() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg border border-border hover:border-secondary/50 transition-colors cursor-pointer">
+                <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
                   <div className="flex items-start gap-4">
-                    <div className="h-16 w-16 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                      <Video className="h-8 w-8 text-secondary" />
+                    <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Video className="h-8 w-8 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold mb-1">Photosynthesis Process</h4>
@@ -239,10 +239,10 @@ export default function LearningToolsPage() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg border border-border hover:border-secondary/50 transition-colors cursor-pointer">
+                <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
                   <div className="flex items-start gap-4">
-                    <div className="h-16 w-16 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                      <Languages className="h-8 w-8 text-accent" />
+                    <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Languages className="h-8 w-8 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold mb-1">Thermodynamics in Hindi</h4>

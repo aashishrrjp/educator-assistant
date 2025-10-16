@@ -71,15 +71,15 @@ export default function TeacherDashboard() {
           <div>
             <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button className="h-auto py-6 flex-col gap-2 bg-transparent" variant="outline">
+              <Button className="h-auto py-6 flex-col gap-2 bg-transparent cursor-pointer" variant="outline">
                 <Plus className="h-5 w-5" />
                 <span>Create Quiz</span>
               </Button>
-              <Button className="h-auto py-6 flex-col gap-2 bg-transparent" variant="outline">
+              <Button className="h-auto py-6 flex-col gap-2 bg-transparent cursor-pointer" variant="outline">
                 <Users className="h-5 w-5" />
                 <span>Mark Attendance</span>
               </Button>
-              <Button className="h-auto py-6 flex-col gap-2 bg-transparent" variant="outline">
+              <Button className="h-auto py-6 flex-col gap-2 bg-transparent cursor-pointer" variant="outline">
                 <BookOpen className="h-5 w-5" />
                 <span>Plan Lesson</span>
               </Button>
@@ -105,14 +105,14 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="h-2 w-2 rounded-full bg-secondary mt-2" />
+                  <div className="h-2 w-2 rounded-full bg-primary mt-2" />
                   <div className="flex-1">
                     <p className="text-sm font-medium">Attendance marked for 9th Grade B</p>
                     <p className="text-xs text-muted-foreground">28/30 students present - 4 hours ago</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="h-2 w-2 rounded-full bg-accent mt-2" />
+                  <div className="h-2 w-2 rounded-full bg-primary mt-2" />
                   <div className="flex-1">
                     <p className="text-sm font-medium">New curriculum plan created</p>
                     <p className="text-xs text-muted-foreground">Physics Chapter 5: Thermodynamics - Yesterday</p>

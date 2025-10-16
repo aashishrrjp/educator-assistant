@@ -13,7 +13,7 @@ export default function StudentDashboard() {
         {/* Header */}
         <header className="border-b border-border bg-card">
           <div className="px-8 py-6">
-            <h1 className="text-3xl font-bold mb-2">Welcome back, Rahul!</h1>
+            <h1 className="text-3xl font-bold mb-2">Welcome back, Student!</h1>
             <p className="text-muted-foreground">Here's your learning progress and upcoming tasks</p>
           </div>
         </header>

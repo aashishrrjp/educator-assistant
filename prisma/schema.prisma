@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+}
+
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+model User {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  email      String   @unique
+  name       String
+  password   String
+  role       UserRole
+  school     String?
+  grade      String?
+  subjects   String[]
+  phone      String?
+  experience String?
+  bio        String?
+  avatarUrl  String?
+  rollNo     String? // The student's roll number within their class
+  className  String? // e.g., "10th-grade-a"
+
+  classesTaught String[]
+  tasks      Task[]
+  assignments Assignment[]
+  curriculums Curriculum[]
+  
+  // A student has many attendance records
+  attendanceRecords Attendance[] @relation("StudentAttendance")
+  // A teacher marks many attendance records
+  markedAttendance  Attendance[] @relation("TeacherAttendance")
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Task {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  text      String
+  completed Boolean  @default(false)
+  dueDate   String?
+  priority  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Assignment {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  subject     String
+  description String?
+  dueDate     DateTime
+  status      String   @default("PENDING")
+  score       Int?
+  totalPoints Int?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  studentId   String   @db.ObjectId
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Attendance {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  date      DateTime         // The date of the attendance record
+  status    AttendanceStatus // PRESENT, ABSENT, or LATE
+  className String           // The class for which attendance was taken
+
+  // Relation to the student
+  studentId String @db.ObjectId
+  student   User   @relation("StudentAttendance", fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Relation to the teacher who marked it
+  teacherId String @db.ObjectId
+  teacher   User   @relation("TeacherAttendance", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  // Ensures a student can only have one attendance record per day
+  @@unique([studentId, date])
+}
+
+model Curriculum {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  subject   String
+  grade     String
+  duration  String?
+  content   String   // This will store the large markdown text from the AI
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation to the teacher who created it
+  teacherId String   @db.ObjectId
+  teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}

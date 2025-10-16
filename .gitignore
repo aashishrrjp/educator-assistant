@@ -10,12 +10,13 @@
 # production
 /build
 
+.venv
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-
+/backend/.venv
 # env files
 .env*
 
@@ -27,3 +28,4 @@ yarn-error.log*
 next-env.d.ts
 
 a.txt
+/generated/prisma

@@ -1,13 +1,6 @@
-# import google.generativeai as genai
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-import time
-# from google.genai.types import GenerateVideosConfig
-from fastapi.concurrency import run_in_threadpool
-from typing import Optional 
-# from google.longrunning.operations_pb2 import GetOperationRequest
 
 # Load environment variables from .env file
 load_dotenv()
@@ -16,43 +9,16 @@ load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
     raise ValueError("GOOGLE_API_KEY not found in .env file")
-# genai.configure(api_key=api_key)
 
-GCS_BUCKET = os.getenv("GCS_BUCKET_NAME")
-if not GCS_BUCKET:
-    raise ValueError("GCS_BUCKET_NAME not found in .env file")
-
-if GCS_BUCKET.startswith("gs://"):
-    GCS_BUCKET = GCS_BUCKET[5:]
-    print(f"Warning: Removed gs:// prefix from GCS_BUCKET_NAME. Using: {GCS_BUCKET}")
-
-try:
-    client = genai.Client(api_key=api_key)
-except Exception as e:
-    print(f"Error creating genai.Client: {e}")
-    raise
-
-project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-if not project_id:
-    raise ValueError("GOOGLE_CLOUD_PROJECT not found in .env file")
-
-try:
-    # Initialize client without api_key to use ADC
-    client = genai.Client(project=project_id)
-    print("genai.Client initialized successfully using ADC.")
-except Exception as e:
-    print(f"Error creating genai.Client: {e}")
-    raise
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel('gemini-2.5-pro')
 
 async def generate_content_from_gemini(prompt: str) -> str:
     """
     Generic function to generate content from Gemini Pro.
     """
     try:
-        response = await client.aio.models.generate_content(
-            model='gemini-2.5-pro',
-            contents=prompt
-        )
+        response = await model.generate_content_async(prompt)
         return response.text
     except Exception as e:
         # Handle potential API errors gracefully
@@ -136,115 +102,3 @@ def create_activity_prompt(req) -> str:
     Provide a clear, step-by-step set of instructions on how to conduct this activity.
     Include materials needed, objectives, and evaluation criteria.
     """
-
-
-import time
-import re
-import uuid
-from typing import Optional
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
-def run_in_threadpool(func, *args, **kwargs):
-    loop = asyncio.get_running_loop()
-    with ThreadPoolExecutor() as pool:
-        return loop.run_in_executor(pool, lambda: func(*args, **kwargs))
-
-# --- ADDED: Helper function to create a safe filename from a title ---
-def _sanitize_filename(title: str) -> str:
-    """Converts a string into a safe, URL-friendly filename slug."""
-    # 1. Convert to lowercase
-    s = title.lower()
-    # 2. Remove special characters
-    s = re.sub(r'[^\w\s-]', '', s)
-    # 3. Replace whitespace and hyphens with a single underscore
-    s = re.sub(r'[\s-]+', '_', s).strip('_')
-    # 4. Truncate to a reasonable length (e.g., 50 chars)
-    s = s[:50]
-    # 5. Add a short unique ID to prevent collisions
-    unique_id = str(uuid.uuid4())[:8]
-    return f"{s}_{unique_id}"
-
-def _blocking_video_generation(prompt: str, file_name: str, duration_seconds: Optional[float] = None, fps: Optional[int] = None):
-    output_gcs_uri = f"gs://{GCS_BUCKET}/{file_name}.mp4"
-
-    # --- ADDED: Dynamically build the config dictionary ---
-    config_params = {
-        "aspect_ratio": "16:9",
-        "output_gcs_uri": output_gcs_uri,
-        # "duration_seconds": duration_seconds,
-    }
-    if duration_seconds:
-        config_params["duration_seconds"] = duration_seconds
-    if fps:
-        config_params["fps"] = fps
-    
-    # Use the dynamically built config
-    # config = GenerateVideosConfig(**config_params)
-    config=types.GenerateVideosConfig(**config_params)
-
-    print(f"Starting video generation with config: {config_params}")
-    try:
-        operation = client.models.generate_videos(
-            model="veo-3.0-generate-001",
-            prompt=prompt,
-            config=config,
-        )
-        print(f"Started video generation operation: {operation.name}")
-    except Exception as e:
-        print(f"Error starting video generation: {e}")
-        raise
-
-    while not operation.done:
-        time.sleep(15)
-        print(f"Polling operation {operation.name}...")
-        try:
-            operation = client.operations.get(operation)
-        except Exception as e:
-            print(f"Error polling operation: {e}")
-            raise
-
-    if operation.error:
-        print(f"Video generation failed: {operation.error}")
-        raise Exception(f"Video generation failed: {operation.error}")
-
-    if operation.response:
-        print(f"Video generation complete. Output should be at: {output_gcs_uri}")
-        # Assuming the API respects the output_gcs_uri in the config
-        return output_gcs_uri
-    else:
-        print("Video generation operation finished but no response received.")
-        return None
-
-async def generate_video_and_suggest_title(prompt: str, duration_seconds: Optional[float] = None, fps: Optional[int] = None):
-    title_prompt = f"Suggest a short, educational title for a video based on this prompt: '{prompt}'. Only return the title text."
-    try:
-        title_response = await client.aio.models.generate_content(
-            model='gemini-2.5-pro',
-            contents=title_prompt
-        )
-        suggested_title = title_response.text.strip().replace('"', '')
-    except Exception as e:
-        print(f"Error generating title: {e}")
-        suggested_title = "Generated Video" # Fallback title
-
-    try:
-        # --- KEY CHANGE: Sanitize the suggested title to create the filename ---
-        safe_file_name = _sanitize_filename(suggested_title)
-        print(f"Suggested Title: '{suggested_title}' -> Sanitized Filename: '{safe_file_name}'")
-
-        video_uri = await run_in_threadpool(
-            _blocking_video_generation,
-            prompt,
-            safe_file_name, # Pass the new, safe filename here
-            duration_seconds,
-            fps
-        )
-        if not video_uri:
-            raise Exception("Video generation completed but no URI was returned.")
-        
-        # Return the original, human-readable title and the final URI
-        return suggested_title, video_uri
-    except Exception as e:
-        print(f"Error in video generation thread: {e}")
-        raise e

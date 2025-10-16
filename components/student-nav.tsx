@@ -35,8 +35,8 @@ export function StudentNav() {
         {/* Logo */}
         <div className="h-16 border-b border-border flex items-center px-6">
           <Link href="/student/dashboard" className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-secondary" />
-            <span className="font-bold text-lg">EduAssist</span>
+            <GraduationCap className="h-6 w-6 text-primary" />
+            <span className="font-bold text-lg">SetuNova</span>
           </Link>
         </div>
 
@@ -66,13 +66,13 @@ export function StudentNav() {
         {/* User Section */}
         <div className="border-t border-border p-4 space-y-2">
           <Link href="/student/profile">
-            <Button variant="ghost" className="w-full justify-start" size="sm">
+            <Button variant="ghost" className="w-full justify-start cursor-pointer" size="sm">
               <User className="h-4 w-4 mr-2" />
               Profile
             </Button>
           </Link>
           <Link href="/sign-in">
-            <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive" size="sm">
+            <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive cursor-pointer" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>

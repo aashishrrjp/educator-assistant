@@ -1,25 +1,47 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { GraduationCap } from "lucide-react"
+import { GraduationCap, Loader2 } from "lucide-react"
 
 export default function SignInPage() {
   const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Mock authentication - redirect to role selection
-    router.push("/role-select")
-  }
+   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to sign in');
+      }
+
+      // On success, redirect based on role
+      const dashboardPath = data.role === 'TEACHER' ? '/teacher/dashboard' : '/student/dashboard';
+      router.push(dashboardPath);
+      router.refresh(); // Refresh to apply server-side logic from middleware
+    } catch (err: any) {
+      setError(err.message);
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -28,7 +50,7 @@ export default function SignInPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <GraduationCap className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">EduAssist</span>
+            <span className="text-xl font-bold">SetuNova</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
           <p className="text-muted-foreground">Sign in to your account to continue</p>
@@ -66,8 +88,11 @@ export default function SignInPage() {
               />
             </div>
 
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
             <Button type="submit" className="w-full" size="lg">
-              Sign In
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
 
@@ -81,7 +106,7 @@ export default function SignInPage() {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 ">
               <Button variant="outline" className="w-full bg-transparent">
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                   <path
@@ -102,12 +127,6 @@ export default function SignInPage() {
                   />
                 </svg>
                 Google
-              </Button>
-              <Button variant="outline" className="w-full bg-transparent">
-                <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
-                </svg>
-                GitHub
               </Button>
             </div>
           </div>

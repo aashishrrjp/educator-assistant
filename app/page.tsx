@@ -11,7 +11,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">EduAssist</span>
+              <span className="text-xl font-bold text-foreground">SetuNova</span>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/sign-in">
@@ -87,8 +87,8 @@ export default function LandingPage() {
 
           {/* Feature Card 2 */}
           <div className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
-            <div className="h-12 w-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-4">
-              <Brain className="h-6 w-6 text-secondary" />
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+              <Brain className="h-6 w-6 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Smart Grading</h3>
             <p className="text-muted-foreground leading-relaxed">
@@ -98,8 +98,8 @@ export default function LandingPage() {
 
           {/* Feature Card 3 */}
           <div className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
-            <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-              <Users className="h-6 w-6 text-accent" />
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+              <Users className="h-6 w-6 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Attendance Management</h3>
             <p className="text-muted-foreground leading-relaxed">
@@ -120,8 +120,8 @@ export default function LandingPage() {
 
           {/* Feature Card 5 */}
           <div className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
-            <div className="h-12 w-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-4">
-              <BarChart3 className="h-6 w-6 text-secondary" />
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+              <BarChart3 className="h-6 w-6 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Analytics Dashboard</h3>
             <p className="text-muted-foreground leading-relaxed">
@@ -131,8 +131,8 @@ export default function LandingPage() {
 
           {/* Feature Card 6 */}
           <div className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
-            <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-              <Brain className="h-6 w-6 text-accent" />
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+              <Brain className="h-6 w-6 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">AI Video Generation</h3>
             <p className="text-muted-foreground leading-relaxed">
@@ -145,7 +145,7 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 rounded-2xl p-12 text-center">
+          <div className="bg-gradient-to-br from-primary/20 via-primary/20 to-accent/20 rounded-2xl p-12 text-center">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to transform your teaching?</h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
               Join thousands of educators using AI to focus on what matters most - mentoring students.
@@ -165,9 +165,9 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-6 w-6 text-primary" />
-              <span className="font-semibold">EduAssist</span>
+              <span className="font-semibold">SetuNova</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2025 EduAssist. Built for Indian educators.</p>
+            <p className="text-sm text-muted-foreground">© 2025 SetuNova. Built for Indian educators.</p>
           </div>
         </div>
       </footer>
