@@ -6,7 +6,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'SetuNova',
-  description: 'Created with v0',
+  description: 'Created with 💜 for Indian Educators',
   generator: 'SetuNova.app',
 }
 

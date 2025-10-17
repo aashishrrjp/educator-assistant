@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Sparkles, BookOpen, Users, ClipboardCheck, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: number;
@@ -69,10 +70,8 @@ const TeacherChatbotPage: FC = () => {
 
       const data = await response.json();
       
-      // The agent's response is the follow-up question or a final statement.
-      // We check for `followUpQuestion` as per the Gemini API's response schema.
-      const assistantResponseContent = data.followUpQuestion || "I have completed the request. How else can I help?";
-      
+      // The AI response can be in `reply` (for direct answers) or `followUpQuestion` (for agentic steps).
+      const assistantResponseContent = data.reply || data.followUpQuestion || "I have completed the request. How else can I help?";
       const assistantResponse: Message = {
         id: Date.now() + 1,
         role: "assistant",
@@ -118,7 +117,7 @@ const TeacherChatbotPage: FC = () => {
                 </Avatar>
               )}
               <div className={`max-w-2xl rounded-lg p-4 prose prose-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
-                 {message.content}
+                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
               {message.role === "user" && (
                 <Avatar className="h-8 w-8 flex-shrink-0"><AvatarFallback>You</AvatarFallback></Avatar>
@@ -177,4 +176,3 @@ const TeacherChatbotPage: FC = () => {
 };
 
 export default TeacherChatbotPage;
-

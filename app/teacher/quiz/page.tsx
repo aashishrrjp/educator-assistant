@@ -1,14 +1,15 @@
-"use client"
+"use client";
 
-import { useState, useEffect, type FC } from "react"
-import { TeacherNav } from "@/components/teacher-nav"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Sparkles, ClipboardCheck, Users, Loader2 } from "lucide-react"
+import { useState, useEffect, type FC } from "react";
+import { TeacherNav } from "@/components/teacher-nav";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Sparkles, ClipboardCheck, Users, Loader2, Trash2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -17,14 +18,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 // --- Type Definitions ---
 interface Question {
@@ -170,7 +171,7 @@ const QuizBuilderPage: FC = () => {
       const newQuiz = await response.json();
       if (!response.ok) throw new Error(newQuiz.message || 'Failed to save quiz.');
 
-      await fetchQuizzes(); // Refetch all quizzes to get the latest list with counts
+      await fetchQuizzes();
       setShowCreateDialog(false);
     } catch (err: any) {
       setError(err.message);
@@ -179,10 +180,38 @@ const QuizBuilderPage: FC = () => {
     }
   };
 
+  // --- Manual Question Handlers ---
+  const handleAddQuestion = () => {
+    const newQuestion: Question = {
+      id: Date.now(),
+      text: "",
+      options: ["", "", "", ""],
+      correct: 0,
+    };
+    setQuestions(prev => [...prev, newQuestion]);
+  };
+
+  const handleQuestionChange = (id: number, field: 'text' | 'option' | 'correct', value: string | number, optionIndex?: number) => {
+    setQuestions(prev => prev.map(q => {
+      if (q.id !== id) return q;
+      if (field === 'text') return { ...q, text: value as string };
+      if (field === 'correct') return { ...q, correct: value as number };
+      if (field === 'option' && optionIndex !== undefined) {
+        const newOptions = [...q.options];
+        newOptions[optionIndex] = value as string;
+        return { ...q, options: newOptions };
+      }
+      return q;
+    }));
+  };
+
+  const handleDeleteQuestion = (id: number) => setQuestions(prev => prev.filter(q => q.id !== id));
+
+
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-background">
       <TeacherNav />
-      <main className="flex-1 overflow-y-auto bg-background">
+      <main className="flex-1 overflow-y-auto">
         <header className="border-b border-border bg-card">
           <div className="px-8 py-6 flex items-center justify-between">
             <div>
@@ -209,26 +238,43 @@ const QuizBuilderPage: FC = () => {
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild><Button onClick={() => { setQuestions([]); setQuizTitle(""); setQuizSubject(""); setQuizClassName(""); setError(null); setShowCreateDialog(true); }}><Plus className="h-4 w-4 mr-2" />Create Quiz</Button></DialogTrigger>
                 <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-                  <DialogHeader><DialogTitle>Create New Quiz</DialogTitle><DialogDescription>Review the questions and assign a class.</DialogDescription></DialogHeader>
+                  <DialogHeader><DialogTitle>Create New Quiz</DialogTitle><DialogDescription>Build a custom quiz for your students.</DialogDescription></DialogHeader>
                   <div className="space-y-6 py-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label htmlFor="quiz-title">Quiz Title</Label><Input id="quiz-title" value={quizTitle} onChange={(e) => setQuizTitle(e.target.value)} /></div>
-                      <div className="space-y-2"><Label htmlFor="quiz-subject">Subject</Label><Input id="quiz-subject" value={quizSubject} onChange={(e) => setQuizSubject(e.target.value)} /></div>
+                      <div className="space-y-2"><Label htmlFor="quiz-title">Quiz Title</Label><Input id="quiz-title" value={quizTitle} onChange={(e) => setQuizTitle(e.target.value)} placeholder="e.g., Algebra Mid-Term" /></div>
+                      <div className="space-y-2"><Label htmlFor="quiz-subject">Subject</Label><Input id="quiz-subject" value={quizSubject} onChange={(e) => setQuizSubject(e.target.value)} placeholder="e.g., Mathematics" /></div>
                       <div className="space-y-2 col-span-2"><Label htmlFor="quiz-class">Class Name</Label><Input id="quiz-class" placeholder="e.g., 10th Grade - Section A" value={quizClassName} onChange={(e) => setQuizClassName(e.target.value)} required/></div>
                     </div>
-                    <div className="space-y-2"><Label>Questions ({questions.length})</Label>
-                      {questions.map((question, index) => (
-                        <Card key={question.id}>
-                          <CardContent className="pt-4"><p className="font-medium">Q{index+1}: {question.text}</p>
-                            <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-                              {question.options.map((opt, optIndex) => (
-                                <p key={optIndex} className={question.correct === optIndex ? 'font-semibold text-green-600' : ''}>- {opt}</p>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                    {/* --- FIX STARTS HERE: Interactive Question Editor --- */}
+                    <div className="space-y-2">
+                        <Label>Questions ({questions.length})</Label>
+                        <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-4 border-t pt-4">
+                            {questions.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Click "Add Question" to start building your quiz.</p>
+                            )}
+                            {questions.map((question, index) => (
+                            <Card key={question.id}>
+                                <CardContent className="pt-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor={`q-text-${question.id}`} className="font-medium">Question {index + 1}</Label>
+                                    <Button variant="ghost" size="icon" className="text-destructive h-7 w-7" onClick={() => handleDeleteQuestion(question.id)}><Trash2 className="h-4 w-4" /></Button>
+                                </div>
+                                <Textarea id={`q-text-${question.id}`} placeholder="Enter question text..." value={question.text} onChange={(e) => handleQuestionChange(question.id, 'text', e.target.value)} />
+                                <RadioGroup value={String(question.correct)} onValueChange={(val) => handleQuestionChange(question.id, 'correct', parseInt(val, 10))} className="space-y-2 pt-2">
+                                    {question.options.map((opt, optIndex) => (
+                                    <div key={optIndex} className="flex items-center gap-3">
+                                        <RadioGroupItem value={String(optIndex)} id={`q-${question.id}-opt-${optIndex}`} />
+                                        <Input placeholder={`Option ${optIndex + 1}`} value={opt} onChange={(e) => handleQuestionChange(question.id, 'option', e.target.value, optIndex)} />
+                                    </div>
+                                    ))}
+                                </RadioGroup>
+                                </CardContent>
+                            </Card>
+                            ))}
+                        </div>
+                        <Button variant="outline" className="w-full mt-4" onClick={handleAddQuestion}><Plus className="h-4 w-4 mr-2" />Add Question</Button>
                     </div>
+                    {/* --- FIX ENDS HERE --- */}
                   </div>
                   <DialogFooter>
                     {error && <p className="text-sm text-destructive mr-auto">{error}</p>}
@@ -322,3 +368,4 @@ const QuizBuilderPage: FC = () => {
 };
 
 export default QuizBuilderPage;
+

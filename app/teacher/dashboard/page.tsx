@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, type FC } from "react"; // FIX: Changed import to TeacherNav
 import { useRouter } from "next/navigation"; // Import the router
 import { TeacherNav } from "@/components/teacher-nav";
 import { Button } from "@/components/ui/button";

@@ -13,6 +13,7 @@ import {
   User,
   LogOut,
   Languages,
+  Image as ImageIcon, // Imported the Image icon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +24,8 @@ export function StudentNav() {
     { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/student/assignments", label: "Assignments", icon: BookOpen },
     { href: "/student/learning", label: "Learning Tools", icon: Video },
+    // Added the new navigation link here
+    { href: "/student/concept-illustrator", label: "Concept Illustrator", icon: ImageIcon },
     { href: "/student/chatbot", label: "AI Tutor", icon: MessageSquare },
     { href: "/student/tasks", label: "My Tasks", icon: CheckSquare },
     { href: "/student/translate", label: "Translate", icon: Languages },
@@ -44,7 +47,7 @@ export function StudentNav() {
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isActive = pathname.startsWith(item.href) // Use startsWith for better active state matching
             return (
               <Link key={item.href} href={item.href}>
                 <div

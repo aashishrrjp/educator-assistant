@@ -1,8 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { jwtVerify } from 'jose';
+import axios from 'axios';
 
 // This should be in a shared helper file, but is here for simplicity
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
 async function getAuthPayload(req: NextApiRequest) {
   const token = req.cookies.auth_token;
   if (!token) return null;
@@ -15,55 +18,47 @@ async function getAuthPayload(req: NextApiRequest) {
   }
 }
 
-// The fixed system instruction for your agent
+// A detailed system instruction to guide the AI's persona for teachers
 const systemInstruction = {
   parts: [{
-    text: "You are 'Setunova', an agentic AI assistant for teachers. Your primary role is to understand a user's request in natural language and use the appropriate tool to fulfill it.\n\n1.  **Analyze the user's message** to determine their intent and which tool they need.\n2.  **Extract all relevant parameters** for that tool from the conversation history and the latest message.\n3.  **Check for completeness.** If you have enough information, proceed to generate the response.\n4.  **Ask for clarification.** If information is missing, ask a clear, friendly follow-up question. Do not try to guess missing information.\n5.  **Be conversational.** Maintain a helpful and professional tone.\n6.  **Format your final outputs** using markdown for readability (e.g., using lists, bold text, and tables)."
-  }],
-  role: "user" // As per your payload structure
+    text: `You are 'SetuNova AI Assistant', a friendly and professional AI partner for teachers. Your goal is to provide clear, structured, and helpful resources.
+1.  **Be Professional and Collaborative:** Maintain a supportive and expert tone. Address the teacher as a colleague.
+2.  **Structure Your Answers:** Always use Markdown for clear formatting. Use headings, bold text, lists, and tables to create professional-quality documents.
+3.  **Provide Actionable Content:** When creating lesson plans, rubrics, or tips, provide concrete, actionable steps.
+4.  **Use LaTeX for Math/Science:** Enclose ALL mathematical formulas, equations, chemical formulas, and scientific notations in LaTeX delimiters. Use $$...$$ for block equations and $...$ for inline equations.
+5.  **Be Direct:** Do not start responses with conversational fluff like "Of course, I can help with that." Directly provide the requested information.
+Special note- Dont include any messages like ofcourse i can help you, etc. Just provide the response directly without any markdown display for making table, etc.`
+  }]
 };
 
-// The generation configuration for your agent, including the full schema
-const generationConfig = {
-  responseMimeType: "application/json",
-  responseSchema: {
-    type: "OBJECT",
-    properties: {
-      tool: {
-        type: "STRING",
-        description: "The specific tool the user wants to use. If the intent is unclear or just a casual conversation, use 'SEARCH'.",
-        enum: ["Curriculum Designer", "Lesson Plan Generator", "Timetable Generator", "Quiz Generator", "Activity Designer", "Resource Finder", "SEARCH"],
-      },
-      isRequestComplete: {
-        type: "BOOLEAN",
-        description: "Set to true if all necessary information to use the tool is present. Set to false if information is missing.",
-      },
-      params: {
-        type: "OBJECT",
-        description: "Extracted parameters for the selected tool.",
-        properties: {
-          className: { type: "STRING", description: "The grade or class level (e.g., 'Grade 10')." },
-          activityType: { type: "STRING", enum: ["Group", "Individual"] },
-          difficulty: { type: "STRING", enum: ["Easy", "Medium", "Hard"] },
-          numClasses: { type: "INTEGER", description: "Number of classes for a timetable." },
-          numQuestions: { type: "INTEGER", description: "Number of questions for a quiz." },
-          query: { type: "STRING", description: "The user's original query for the SEARCH tool." },
-          quizType: { type: "STRING", enum: ["Objective (MCQ)", "Subjective (Open-ended)", "Both"] },
-          rules: { type: "STRING", description: "Optional rules for a timetable." },
-          subject: { type: "STRING", description: "The academic subject (e.g., 'Physics')." },
-          topic: { type: "STRING", description: "A single topic for a lesson plan, quiz, or activity." },
-          topics: { type: "STRING", description: "A comma-separated list of topics for a curriculum." },
-          totalHours: { type: "INTEGER", description: "Total weekly hours for a timetable." },
-        },
-      },
-      followUpQuestion: {
-        type: "STRING",
-        description: "If isRequestComplete is false, formulate a concise, friendly question for the missing information. This should be null if isRequestComplete is true.",
-      },
-    },
-    required: ["tool", "isRequestComplete", "params"],
-  },
-};
+// Function to call the Gemini text model
+async function generateText(contents: any[]) {
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+  
+  const payload = { 
+    contents,
+    systemInstruction,
+  };
+
+  const response = await axios.post(apiUrl, payload);
+  const candidate = response.data.candidates?.[0];
+  if (candidate && candidate.content?.parts?.[0]?.text) {
+    return candidate.content.parts[0].text;
+  }
+  return "I'm sorry, I couldn't generate a text response at this moment.";
+}
+
+// Function to call the Imagen image model
+async function generateImage(prompt: string) {
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GEMINI_API_KEY}`;
+  const payload = { instances: [{ prompt }], parameters: { "sampleCount": 1 } };
+  const response = await axios.post(apiUrl, payload);
+  const prediction = response.data.predictions?.[0];
+  if (prediction && prediction.bytesBase64Encoded) {
+    return `data:image/png;base64,${prediction.bytesBase64Encoded}`;
+  }
+  return null;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -75,8 +70,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Authentication required.' });
   }
 
-  // Ensure you have your Gemini API key in your environment variables
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_API_KEY) {
       return res.status(500).json({ message: 'Server configuration error: Missing Gemini API Key.' });
   }
@@ -96,35 +89,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { role: 'user', parts: [{ text: message }] }
     ];
 
-    const agentPayload = {
-      contents,
-      systemInstruction,
-      generationConfig
-    };
-    
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const response = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(agentPayload),
-    });
+    // Check for keywords that suggest an image is needed
+    const imageKeywords = ['draw', 'diagram', 'illustrate', 'show me a picture', 'visualize'];
+    const requestsImage = imageKeywords.some(keyword => message.toLowerCase().includes(keyword));
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Gemini API Error:", errorText);
-        throw new Error(`Gemini API responded with status ${response.status}: ${errorText}`);
-    }
+    // Call both text and image generation in parallel
+    const [textReply, imageUrl] = await Promise.all([
+      generateText(contents),
+      requestsImage ? generateImage(message) : Promise.resolve(null)
+    ]);
 
-    const agentResponse = await response.json();
-
-    const responseText = agentResponse.candidates[0].content.parts[0].text;
-    const finalData = JSON.parse(responseText);
-
-    res.status(200).json(finalData);
+    // Return a response with both text and an optional image URL
+    res.status(200).json({ reply: textReply, imageUrl });
 
   } catch (error: any) {
-    console.error('Chatbot API error:', error);
+    console.error('Chatbot API error:', error.response?.data || error.message);
     res.status(500).json({ message: 'An internal server error occurred.', details: error.message });
   }
 }

@@ -2,8 +2,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { GraduationCap, BookOpen, Brain, Users, BarChart3, MessageSquare } from "lucide-react"
 
+
 export default function LandingPage() {
   return (
+    
     <div className="min-h-screen bg-background">
       {/* Navigation */}
       <nav className="border-b border-border">

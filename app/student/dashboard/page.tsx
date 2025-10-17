@@ -73,7 +73,7 @@ export default function StudentDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button className="h-auto py-6 flex-col gap-2 bg-transparent" variant="outline">
                 <Video className="h-5 w-5" />
-                <span>Generate Video</span>
+                <span>Concept Illustrator</span>
               </Button>
               <Button className="h-auto py-6 flex-col gap-2 bg-transparent" variant="outline">
                 <MessageSquare className="h-5 w-5" />
