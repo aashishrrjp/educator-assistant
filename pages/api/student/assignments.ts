@@ -1,4 +1,3 @@
-// File: pages/api/student/assignments.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/dbConnect';
 import { jwtVerify } from 'jose';
@@ -32,18 +31,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json([]);
     }
 
-    const [assignments, quizzes, submissions] = await Promise.all([
-      prisma.assignment.findMany({
-        where: { studentId },
-        orderBy: { dueDate: 'asc' },
-      }),
-      prisma.quiz.findMany({
-        where: { className: user.className },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.quizSubmission.findMany({
-        where: { studentId },
-      }),
+    // Fetch assignments, quizzes, submissions, AND activities in parallel
+    const [assignments, quizzes, submissions, activities] = await Promise.all([
+      prisma.assignment.findMany({ where: { studentId }, orderBy: { dueDate: 'asc' } }),
+      prisma.quiz.findMany({ where: { className: user.className }, orderBy: { createdAt: 'desc' } }),
+      prisma.quizSubmission.findMany({ where: { studentId } }),
+      prisma.activity.findMany({ where: { className: user.className }, orderBy: { createdAt: 'desc' } }),
     ]);
 
     const submissionMap = new Map(submissions.map(s => [s.quizId, s]));
@@ -59,21 +52,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: submission ? 'COMPLETED' : 'PENDING',
         score: submission?.score,
         totalPoints: submission?.totalPoints,
-        type: 'quiz',
+        type: 'quiz' as const,
         questions: quiz.questions,
-        studentAnswers: submission?.answers, // ✨ ADD THIS LINE
+        studentAnswers: submission?.answers, // Include student's answers for review
       };
     });
+    
+    // Format activities to match the unified structure
+    const formattedActivities = activities.map(activity => ({
+        id: activity.id,
+        title: activity.title,
+        subject: 'Interactive',
+        description: activity.description,
+        dueDate: activity.createdAt.toISOString(),
+        status: 'PENDING' as const, // Activities are always pending interaction
+        type: 'activity' as const,
+        url: activity.url,
+    }));
 
-    const formattedAssignments = assignments.map(a => ({ ...a, type: 'assignment' }));
+    const formattedAssignments = assignments.map(a => ({
+      ...a,
+      type: 'assignment' as const,
+      dueDate: a.dueDate.toISOString()
+    }));
 
-    const combined = [...formattedAssignments, ...formattedQuizzes].sort(
+    // Combine all three types of tasks
+    const combined = [...formattedAssignments, ...formattedQuizzes, ...formattedActivities].sort(
       (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
     );
 
     res.status(200).json(combined);
   } catch (error) {
-    console.error('Failed to fetch assignments and quizzes:', error);
-    res.status(500).json({ message: 'Failed to fetch assignments and quizzes' });
+    console.error('Failed to fetch assignments and activities:', error);
+    res.status(500).json({ message: 'Failed to fetch assignments and activities' });
   }
 }
+

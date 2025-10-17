@@ -42,6 +42,7 @@ model User {
   tasks      Task[]
   assignments Assignment[]
   curriculums Curriculum[]
+  createdActivities Activity[]
   quizSubmissions QuizSubmission[]
   quizzes   Quiz[]
   
@@ -131,6 +132,18 @@ model Quiz {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  teacherId String @db.ObjectId
+  teacher   User   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  url         String
+  className   String
+  createdAt   DateTime @default(now())
 
   teacherId String @db.ObjectId
   teacher   User   @relation(fields: [teacherId], references: [id], onDelete: Cascade)

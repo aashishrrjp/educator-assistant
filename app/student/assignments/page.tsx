@@ -25,8 +25,9 @@ interface UnifiedAssignment {
   status: string;
   score?: number | null;
   totalPoints?: number | null;
-  type: 'assignment' | 'quiz';
+  type: 'assignment' | 'quiz' | 'activity';
   questions?: Question[];
+  url?: string; // Added for activities
   studentAnswers?: Record<number, number>; // Holds the student's answers
 }
 
@@ -94,7 +95,7 @@ const StudentAssignmentsPage: FC = () => {
 
   // --- UI Helpers ---
   const getDueDateInfo = (dueDateStr: string, status: string) => {
-    if (status !== 'PENDING') return { text: `Graded`, color: 'bg-green-500/10 text-green-500' };
+    if (status !== 'PENDING' || !dueDateStr) return { text: `Graded`, color: 'bg-green-500/10 text-green-500' };
     const dueDate = new Date(dueDateStr);
     const today = new Date();
     const diffTime = dueDate.getTime() - today.getTime();
@@ -149,9 +150,15 @@ const StudentAssignmentsPage: FC = () => {
                     </CardHeader>
                     <CardContent>
                       {item.status === 'PENDING' ? (
-                        <Button className="w-full" onClick={() => item.type === 'quiz' ? handleStartQuiz(item) : alert('Starting assignment...')}>
-                          {item.type === 'quiz' ? 'Start Quiz' : 'Start Assignment'}
-                        </Button>
+                        item.type === 'activity' ? (
+                          <Button className="w-full" asChild>
+                            <a href={item.url} target="_blank" rel="noopener noreferrer">Start Activity</a>
+                          </Button>
+                        ) : (
+                          <Button className="w-full" onClick={() => item.type === 'quiz' ? handleStartQuiz(item) : alert('Starting assignment...')}>
+                            {item.type === 'quiz' ? 'Start Quiz' : 'Start Assignment'}
+                          </Button>
+                        )
                       ) : (
                         <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
                           <div>

@@ -29,6 +29,7 @@ export function TeacherNav() {
     { href: "/teacher/chatbot", label: "AI Assistant", icon: MessageSquare },
     { href: "/teacher/task", label: "My Tasks", icon: CheckSquare },
     { href: "/teacher/wellbeing", label: "Wellbeing", icon: Heart },
+     { href: "/teacher/activity", label: "Activity", icon: ClipboardCheck },
   ]
 
   // --- FIX: Removed the outer container `div` ---
