@@ -26,17 +26,34 @@ async def generate_content_from_gemini(prompt: str) -> str:
         return "Error: Could not generate content from AI model."
 
 # --- PROMPT TEMPLATES ---
-
 def create_curriculum_prompt(req, sample_content: str = None) -> str:
+    """
+    Generates a sophisticated, structured prompt for creating a chapter-wise curriculum plan,
+    incorporating modern pedagogical frameworks aligned with the user's examples.
+    """
     prompt = f"""
-    Act as an expert curriculum designer for Indian schools.
-    Generate a detailed curriculum for:
-    - Class: {req.target_class}
-    - Subject: {req.subject}
-    - Topics to include: {', '.join(req.topics)}
+    You are an expert curriculum architect and STEM pedagogy specialist for K-12 education in India. You are deeply familiar with the NEP 2020 framework, Bloom's Taxonomy, Howard Gardner’s Multiple Intelligences, and 21st-Century Skills.
 
-    The output should be in a detailed bulletin format with columns for:
-    'Topic', 'Sub-topics', 'Learning Objectives', 'Estimated Hours', and 'Suggested Activities'. Dont include any messages like ofcourse i can help you, etc. Just provide the curriculum directly.
+    Your task is to generate a comprehensive, chapter-wise curriculum plan based on the following details:
+    - **Class:** {req.target_class}
+    - **Subject:** {req.subject}
+    - **Chapters/Units to Cover:** {', '.join(req.topics)}
+
+    Present the output as a clean, practical, and detailed markdown table.
+
+    ### 🔒 Output Constraints & Rules:
+    1.  **Direct Output:** Begin the response directly with the markdown table. Do NOT include any introductory phrases like "Certainly, here is..." or other conversational filler.
+    2.  **Practicality:** All suggested activities and projects must be low-cost, experiential, and feasible for a standard Indian classroom setting.
+    3.  **NEP 2020 Alignment:** Ensure the entire plan reflects key NEP principles: competency-based learning, cross-disciplinary thinking, experiential activities, and formative assessment.
+    4.  **Conciseness:** Keep descriptions within the table cells clear, actionable, and to the point. Avoid verbose, theoretical explanations.
+    5.  **Accuracy:** All content must be scientifically accurate and age-appropriate for Grade {req.target_class}.
+
+    ### 🧩 Required Markdown Table Structure:
+
+    | Chapter Name | Core Concepts / Sub-topics | Learning Objectives (Action Verbs from Bloom's) | STEM Integration (S+T+E+M) | Hands-On Project Idea | Assessment Strategy (Formative) | NEP 2020 & 21C Skills Link |
+    | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+    | | | | | | | |
+
     """
     if sample_content:
         prompt += f"\n\nUse the following sample curriculum as a reference for style and structure:\n---SAMPLE---\n{sample_content}\n---END SAMPLE---"
