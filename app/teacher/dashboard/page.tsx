@@ -95,7 +95,7 @@ const TeacherDashboard: FC = () => {
               <p className="text-muted-foreground">Here's what's happening with your classes today.</p>
             </div>
             <Button asChild variant="outline" size="icon">
-              <a href="https://notebooklm.google.com/accessrequest/065b8764-34db-4ac5-b46e-123ebfc295ea" target="_blank" rel="noopener noreferrer">
+              <a href="https://notebooklm.google.com/notebook/065b8764-34db-4ac5-b46e-123ebfc295ea" target="_blank" rel="noopener noreferrer">
                 <HelpCircle className="h-5 w-5" />
               </a>
             </Button>
