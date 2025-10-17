@@ -6,9 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Sparkles, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Plus, Sparkles, Loader2, Bot } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
+import { Prisma } from "@prisma/client";
+
+// --- Type Definitions ---
+// Define a type for the LessonPlan that can be null
+type LessonPlan = Prisma.LessonPlanGetPayload<{}> | null;
 
 interface Curriculum {
   id: string;
@@ -17,32 +22,40 @@ interface Curriculum {
   grade: string;
   duration?: string | null;
   content: string;
+  lessonPlan?: LessonPlan;
 }
 
 const CurriculumPage: FC = () => {
+  // --- State Management ---
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
   const [selectedCurriculum, setSelectedCurriculum] = useState<Curriculum | null>(null);
-  const [showAIDialog, setShowAIDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    subject: "",
-    grade: "",
-    topic: "",
-    duration: "",
-  });
+  // AI Curriculum Generation States
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [formData, setFormData] = useState({ subject: "", grade: "", topic: "", duration: "" });
 
+  // AI Lesson Plan Generation State
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+
+
+  // --- Data Fetching ---
   const fetchCurriculums = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch('/api/curriculum/generated');
       if (!response.ok) throw new Error('Failed to fetch curriculums.');
-      const data = await response.json();
+      const data: Curriculum[] = await response.json();
       setCurriculums(data);
-      if (data.length > 0 && !selectedCurriculum) {
+      
+      if (selectedCurriculum) {
+        // If a curriculum was selected, find its updated version in the new data
+        setSelectedCurriculum(data.find(c => c.id === selectedCurriculum.id) || data[0] || null);
+      } else if (data.length > 0) {
+        // Otherwise, just select the first one
         setSelectedCurriculum(data[0]);
       }
     } catch (err: any) {
@@ -56,12 +69,9 @@ const CurriculumPage: FC = () => {
     fetchCurriculums();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
-  };
 
-  const handleGenerate = async () => {
+  // --- Event Handlers ---
+  const handleGenerateCurriculum = async () => {
     setIsGenerating(true);
     setError(null);
     try {
@@ -70,24 +80,48 @@ const CurriculumPage: FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to generate curriculum.');
       }
-      
       const newCurriculum = await response.json();
-      
       await fetchCurriculums();
       setSelectedCurriculum(newCurriculum);
       setShowAIDialog(false);
     } catch (err: any) {
-      setError(err.message); // Display the error in the modal
-      console.error(err);
+      setError(err.message);
     } finally {
       setIsGenerating(false);
     }
   };
+  
+  const handleGenerateLessonPlan = async () => {
+    if (!selectedCurriculum) return;
+
+    setIsGeneratingPlan(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/curriculum/lesson-plan/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          curriculumId: selectedCurriculum.id,
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate lesson plan.');
+      }
+      // The API returns the new lesson plan, but we refetch everything
+      // to ensure the curriculum object is fully updated with its new relation.
+      await fetchCurriculums();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
+
 
   return (
     <div className="flex h-screen">
@@ -95,41 +129,30 @@ const CurriculumPage: FC = () => {
       <main className="flex-1 overflow-y-auto bg-background">
         <header className="border-b border-border bg-card">
           <div className="px-8 py-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Curriculum Builder</h1>
-              <p className="text-muted-foreground">Create and manage your teaching curriculum with AI.</p>
-            </div>
+            <div><h1 className="text-3xl font-bold mb-2">Curriculum & Lesson Planner</h1><p className="text-muted-foreground">Design curriculums and generate daily lesson plans with AI.</p></div>
             <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
-              <DialogTrigger asChild><Button onClick={() => setError(null)}><Sparkles className="h-4 w-4 mr-2" />AI Generate</Button></DialogTrigger>
+              <DialogTrigger asChild><Button><Sparkles className="h-4 w-4 mr-2" />AI Generate Curriculum</Button></DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>AI Curriculum Generator</DialogTitle>
-                  <DialogDescription>Describe what you want to teach and let AI create a plan.</DialogDescription>
-                </DialogHeader>
+                <DialogHeader><DialogTitle>AI Curriculum Generator</DialogTitle><DialogDescription>Describe your teaching goals and let AI create a plan.</DialogDescription></DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2"><Label htmlFor="subject">Subject</Label><Input id="subject" value={formData.subject} onChange={handleInputChange} placeholder="e.g., Chemistry" /></div>
-                  <div className="space-y-2"><Label htmlFor="grade">Grade/Class</Label><Input id="grade" value={formData.grade} onChange={handleInputChange} placeholder="e.g., 10th Grade" /></div>
-                  <div className="space-y-2"><Label htmlFor="topic">Topics (comma-separated)</Label><Input id="topic" value={formData.topic} onChange={handleInputChange} placeholder="e.g., chemical reactions, equations" /></div>
-                  <div className="space-y-2"><Label htmlFor="duration">Duration</Label><Input id="duration" value={formData.duration} onChange={handleInputChange} placeholder="e.g., 3 weeks" /></div>
+                  <div className="space-y-2"><Label htmlFor="subject">Subject</Label><Input id="subject" value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} placeholder="e.g., Chemistry" /></div>
+                  <div className="space-y-2"><Label htmlFor="grade">Grade/Class</Label><Input id="grade" value={formData.grade} onChange={(e) => setFormData({...formData, grade: e.target.value})} placeholder="e.g., 10th Grade" /></div>
+                  <div className="space-y-2"><Label htmlFor="topic">Topics</Label><Input id="topic" value={formData.topic} onChange={(e) => setFormData({...formData, topic: e.target.value})} placeholder="e.g., chemical reactions, equations" /></div>
+                  <div className="space-y-2"><Label htmlFor="duration">Duration</Label><Input id="duration" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} placeholder="e.g., 3 weeks" /></div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
                 </div>
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setShowAIDialog(false)}>Cancel</Button>
-                  <Button onClick={handleGenerate} disabled={isGenerating}>
-                    {isGenerating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating...</> : <><Sparkles className="h-4 w-4 mr-2" />Generate Curriculum</>}
-                  </Button>
-                </div>
+                <DialogFooter><Button variant="outline" onClick={() => setShowAIDialog(false)}>Cancel</Button><Button onClick={handleGenerateCurriculum} disabled={isGenerating}>{isGenerating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating...</> : "Generate"}</Button></DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
         </header>
 
         <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <Card>
               <CardHeader><CardTitle>Your Curriculums</CardTitle></CardHeader>
               <CardContent>
-                {isLoading ? <p>Loading...</p> :
+                {isLoading ? <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div> :
                  curriculums.length === 0 ? <p className="text-muted-foreground text-sm">No curriculums found. Generate one to get started!</p> :
                 <div className="space-y-2">
                   {curriculums.map((curriculum) => (
@@ -143,21 +166,58 @@ const CurriculumPage: FC = () => {
             </Card>
           </div>
 
-          <div className="lg:col-span-2">
-            {selectedCurriculum ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{selectedCurriculum.title}</CardTitle>
-                  <CardDescription>{selectedCurriculum.grade} • {selectedCurriculum.subject} • {selectedCurriculum.duration}</CardDescription>
-                </CardHeader>
-                <CardContent className="prose prose-sm max-w-none prose-headings:font-semibold prose-h3:text-lg prose-p:leading-relaxed prose-li:my-1">
-                  <ReactMarkdown>{selectedCurriculum.content}</ReactMarkdown>
-                </CardContent>
-              </Card>
-            ) : !isLoading && (
-              <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Select a curriculum to view its content.</p>
-              </div>
+          <div className="lg:col-span-2 space-y-6">
+            {!selectedCurriculum && !isLoading && (
+              <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg"><p className="text-muted-foreground">Select a curriculum to view its content.</p></div>
+            )}
+            {selectedCurriculum && (
+              <>
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle>{selectedCurriculum.title}</CardTitle>
+                        <CardDescription>{selectedCurriculum.grade} • {selectedCurriculum.subject} • {selectedCurriculum.duration}</CardDescription>
+                      </div>
+                      {!selectedCurriculum.lessonPlan && (
+                        <Button 
+                            variant="secondary" 
+                            onClick={handleGenerateLessonPlan} 
+                            disabled={isGeneratingPlan}
+                        >
+                            {isGeneratingPlan ? (
+                                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating Plan...</>
+                            ) : (
+                                <><Bot className="h-4 w-4 mr-2" />Generate Lesson Plan</>
+                            )}
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="prose prose-sm max-w-none prose-headings:font-semibold prose-h3:text-lg prose-p:leading-relaxed prose-li:my-1">
+                    <ReactMarkdown>{selectedCurriculum.content}</ReactMarkdown>
+                  </CardContent>
+                </Card>
+                
+                {isGeneratingPlan && (
+                    <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="ml-4 text-muted-foreground">AI is generating your lesson plan...</p>
+                    </div>
+                )}
+
+                {selectedCurriculum.lessonPlan && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Daily Lesson Plan</CardTitle>
+                      <CardDescription>Your AI-generated teaching schedule for "{selectedCurriculum.title}".</CardDescription>
+                    </CardHeader>
+                    <CardContent className="prose prose-sm max-w-none prose-table:w-full prose-table:table-fixed">
+                      <ReactMarkdown>{selectedCurriculum.lessonPlan.content}</ReactMarkdown>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -167,3 +227,4 @@ const CurriculumPage: FC = () => {
 };
 
 export default CurriculumPage;
+
