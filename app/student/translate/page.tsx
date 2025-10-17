@@ -38,7 +38,7 @@ const StudentTranslatePage: FC = () => {
     setTranslatedText("");
 
     try {
-      const response = await fetch('/api/translate', {
+      const response = await fetch('/api/translate/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: inputText, targetLanguage }),
