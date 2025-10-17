@@ -127,9 +127,9 @@ const StudentDashboard: FC = () => {
           <div>
             <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button className="h-auto py-6 flex-col gap-2" variant="outline" onClick={() => router.push('/student/concept-illustrator')}><Video className="h-5 w-5" /><span>Concept Illustrator</span></Button>
-              <Button className="h-auto py-6 flex-col gap-2" variant="outline" onClick={() => router.push('/student/chatbot')}><MessageSquare className="h-5 w-5" /><span>Ask AI Tutor</span></Button>
-              <Button className="h-auto py-6 flex-col gap-2" variant="outline" onClick={() => router.push('/student/assignments')}><BookOpen className="h-5 w-5" /><span>View All Assignments</span></Button>
+              <Button className="h-auto py-6 flex-col gap-2 cursor-pointer" variant="outline" onClick={() => router.push('/student/concept-illustrator')}><Video className="h-5 w-5" /><span>Concept Illustrator</span></Button>
+              <Button className="h-auto py-6 flex-col gap-2 cursor-pointer" variant="outline" onClick={() => router.push('/student/chatbot')}><MessageSquare className="h-5 w-5" /><span>Ask AI Tutor</span></Button>
+              <Button className="h-auto py-6 flex-col gap-2 cursor-pointer" variant="outline" onClick={() => router.push('/student/assignments')}><BookOpen className="h-5 w-5" /><span>View All Assignments</span></Button>
             </div>
           </div>
 

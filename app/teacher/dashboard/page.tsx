@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"; // Import the router
 import { TeacherNav } from "@/components/teacher-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Users, ClipboardCheck, TrendingUp, Plus, Calendar, Loader2 } from "lucide-react";
+import { BookOpen, Users, ClipboardCheck, TrendingUp, Plus, Calendar, Loader2, HelpCircle } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 
 // --- Type Definitions for Dashboard Data ---
@@ -89,9 +89,16 @@ const TeacherDashboard: FC = () => {
       <TeacherNav />
       <main className="flex-1 overflow-y-auto bg-background">
         <header className="border-b border-border bg-card">
-          <div className="px-8 py-6">
-            <h1 className="text-3xl font-bold mb-2">Welcome back, {data.teacherName}</h1>
-            <p className="text-muted-foreground">Here's what's happening with your classes today.</p>
+          <div className="px-8 py-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Welcome back, {data.teacherName}</h1>
+              <p className="text-muted-foreground">Here's what's happening with your classes today.</p>
+            </div>
+            <Button asChild variant="outline" size="icon">
+              <a href="https://notebooklm.google.com/accessrequest/065b8764-34db-4ac5-b46e-123ebfc295ea" target="_blank" rel="noopener noreferrer">
+                <HelpCircle className="h-5 w-5" />
+              </a>
+            </Button>
           </div>
         </header>
 
@@ -118,15 +125,15 @@ const TeacherDashboard: FC = () => {
           <div>
             <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button className="h-auto py-6 flex-col gap-2" variant="outline" onClick={() => router.push('/teacher/quiz')}>
+              <Button className="h-auto py-6 flex-col gap-2 cursor-pointer" variant="outline" onClick={() => router.push('/teacher/quiz')}>
                 <Plus className="h-5 w-5" />
                 <span>Create Quiz</span>
               </Button>
-              <Button className="h-auto py-6 flex-col gap-2" variant="outline" onClick={() => router.push('/teacher/attendance')}>
+              <Button className="h-auto py-6 flex-col gap-2 cursor-pointer" variant="outline" onClick={() => router.push('/teacher/attendance')}>
                 <Users className="h-5 w-5" />
                 <span>Mark Attendance</span>
               </Button>
-              <Button className="h-auto py-6 flex-col gap-2" variant="outline" onClick={() => router.push('/teacher/curriculum')}>
+              <Button className="h-auto py-6 flex-col gap-2 cursor-pointer" variant="outline" onClick={() => router.push('/teacher/curriculum')}>
                 <BookOpen className="h-5 w-5" />
                 <span>Plan Lesson</span>
               </Button>

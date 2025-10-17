@@ -64,6 +64,7 @@ def create_lesson_plan_prompt(req) -> str:
     Create a detailed lesson plan for Class {req.target_class} for the subject {req.subject}.
     Break it down week-by-week for a month. Include subtopics, content to be covered, and the hours required for each part.
     Output in a clean, easy-to-read markdown format.
+    1.  **Direct Output:** Begin the response directly with the markdown table. Do NOT include any introductory phrases like "Certainly, here is..." or other conversational filler.
     """
 
 def create_timetable_prompt(req) -> str:

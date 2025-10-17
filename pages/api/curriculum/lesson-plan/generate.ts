@@ -70,7 +70,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: {
         title: `Lesson Plan for ${curriculum.title}`,
         content: aiData.lesson_plan,
-        teacherId: auth.userId,
         curriculumId: curriculum.id,
       },
     });
@@ -85,4 +84,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ message: 'Failed to generate lesson plan' });
   }
 }
-

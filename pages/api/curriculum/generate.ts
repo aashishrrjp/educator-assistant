@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/dbConnect';
 import { jwtVerify } from 'jose';
 import FormData from 'form-data';
+import axios from 'axios'; // Import axios
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -39,27 +40,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     formData.append('target_class', grade);
     formData.append('subject', subject);
     formData.append('topics', topic);
-    if (process.env.NODE_ENV === 'development') {
-      console.log('FormData entries:');
-      (formData as any)._streams.forEach((stream: any, index: number) => { if (index % 2 === 0) console.log(stream); });
-    }
     
     const externalApiUrl = 'http://127.0.0.1:8000/api/v1/teacher/curriculum/generate';
     
-    const response = await fetch(externalApiUrl, {
-      method: 'POST',
-      body: formData as any,
-      // NOTE: We do NOT set the 'Content-Type' header manually.
-      // The 'fetch' API automatically sets the correct multipart header with the boundary.
+    // --- THE FIX: Using axios to reliably send multipart/form-data ---
+    const response = await axios.post(externalApiUrl, formData, {
+      headers: {
+        ...formData.getHeaders(), // Axios can correctly get the headers from the form-data object
+      },
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('External FastAPI Error:', errorText);
-      return res.status(response.status).json({ message: `AI service failed. Details: ${errorText}` });
-    }
     
-    const aiData = await response.json();
+    const aiData = response.data;
 
     const newCurriculum = await prisma.curriculum.create({
       data: {
@@ -74,6 +65,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(201).json(newCurriculum);
   } catch (error: any) {
+    // Axios provides detailed error information
+    if (axios.isAxiosError(error) && error.response) {
+      console.error('External FastAPI Error:', error.response.data);
+      return res.status(error.response.status).json({ message: `AI service failed.`, details: error.response.data });
+    }
     console.error('Curriculum generation error:', error);
     res.status(500).json({ message: error.message || 'An internal server error occurred.' });
   }

@@ -118,6 +118,21 @@ model Curriculum {
   // Relation to the teacher who created it
   teacherId String   @db.ObjectId
   teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  // Relation to its lesson plan
+  lessonPlan LessonPlan?
+}
+
+model LessonPlan {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String   // The title of the lesson plan
+  content   String // The generated lesson plan content
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One-to-one relation with Curriculum
+  curriculumId String     @unique @db.ObjectId
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {

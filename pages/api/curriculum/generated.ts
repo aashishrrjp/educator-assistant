@@ -33,6 +33,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: {
         teacherId: auth.userId,
       },
+      include: {
+        lessonPlan: true, // Include the lesson plan associated with each curriculum
+      },
       orderBy: {
         createdAt: 'desc', // Show the newest ones first
       },
