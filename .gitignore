@@ -29,3 +29,7 @@ next-env.d.ts
 
 a.txt
 /generated/prisma
+
+pycache/
+__pycache__/
+*.pyc
