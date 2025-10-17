@@ -1,57 +1,100 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { TeacherNav } from "@/components/teacher-nav"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Send, Sparkles, BookOpen, Users, ClipboardCheck } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useState, useRef, useEffect, type FC } from "react";
+import { TeacherNav } from "@/components/teacher-nav";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Send, Sparkles, BookOpen, Users, ClipboardCheck, Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-export default function TeacherChatbotPage() {
-  const [messages, setMessages] = useState([
+interface Message {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+}
+
+const TeacherChatbotPage: FC = () => {
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       role: "assistant",
-      content:
-        "Hello! I'm your AI teaching assistant. I can help you with curriculum planning, quiz creation, grading strategies, and more. How can I assist you today?",
+      content: "Hello! I'm your AI teaching assistant. I can help with lesson plans, quizzes, and more. How can I assist you today?",
     },
-  ])
-  const [input, setInput] = useState("")
+  ]);
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const quickActions = [
     { icon: BookOpen, label: "Create a lesson plan", prompt: "Help me create a lesson plan for quadratic equations" },
     { icon: ClipboardCheck, label: "Generate quiz questions", prompt: "Generate 10 quiz questions on Newton's laws" },
     { icon: Users, label: "Student engagement tips", prompt: "Give me tips to improve student engagement" },
     { icon: Sparkles, label: "Grading rubric", prompt: "Create a grading rubric for a physics essay" },
-  ]
+  ];
 
-  const handleSend = () => {
-    if (!input.trim()) return
+  const handleSend = async () => {
+    if (!input.trim()) return;
 
-    setMessages([...messages, { id: messages.length + 1, role: "user", content: input }])
-    setInput("")
+    const newUserMessage: Message = { id: Date.now(), role: "user", content: input };
+    setMessages(prev => [...prev, newUserMessage]);
+    const currentInput = input;
+    setInput("");
+    setIsSending(true);
+    setError(null);
+    
+    // Prepare history for the API call (all messages except the initial greeting)
+    const historyForApi = messages.slice(1).map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
 
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          role: "assistant",
-          content:
-            "I'd be happy to help you with that! Let me provide you with a comprehensive response based on best teaching practices...",
-        },
-      ])
-    }, 1000)
-  }
+    try {
+      const response = await fetch('/api/chatbot/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: currentInput, history: historyForApi }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "The AI assistant failed to respond.");
+      }
+
+      const data = await response.json();
+      
+      // The agent's response is the follow-up question or a final statement.
+      // We check for `followUpQuestion` as per the Gemini API's response schema.
+      const assistantResponseContent = data.followUpQuestion || "I have completed the request. How else can I help?";
+      
+      const assistantResponse: Message = {
+        id: Date.now() + 1,
+        role: "assistant",
+        content: assistantResponseContent,
+      };
+      
+      setMessages(prev => [...prev, assistantResponse]);
+
+    } catch (err: any) {
+      const errorMessage = `Sorry, I encountered an error: ${err.message}`;
+      setError(errorMessage);
+      // Add the error as a message in the chat for visibility
+      setMessages(prev => [...prev, { id: Date.now() + 1, role: "assistant", content: errorMessage }]);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div className="flex h-screen">
       <TeacherNav />
-
-      {/* Main Content */}
       <main className="flex-1 flex flex-col bg-background">
-        {/* Header */}
         <header className="border-b border-border bg-card px-8 py-6">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -64,7 +107,6 @@ export default function TeacherChatbotPage() {
           </div>
         </header>
 
-        {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
           {messages.map((message) => (
             <div key={message.id} className={`flex gap-4 ${message.role === "user" ? "justify-end" : ""}`}>
@@ -75,30 +117,22 @@ export default function TeacherChatbotPage() {
                   </AvatarFallback>
                 </Avatar>
               )}
-              <div
-                className={`max-w-2xl rounded-lg p-4 ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border text-foreground"
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{message.content}</p>
+              <div className={`max-w-2xl rounded-lg p-4 prose prose-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
+                 {message.content}
               </div>
               {message.role === "user" && (
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarFallback className="bg-secondary/10">PS</AvatarFallback>
-                </Avatar>
+                <Avatar className="h-8 w-8 flex-shrink-0"><AvatarFallback>You</AvatarFallback></Avatar>
               )}
             </div>
           ))}
-
-          {/* Quick Actions */}
+          <div ref={messagesEndRef} />
+          
           {messages.length === 1 && (
             <div className="max-w-2xl mx-auto">
-              <p className="text-sm text-muted-foreground mb-4 text-center">Try asking about:</p>
+              <p className="text-sm text-muted-foreground mb-4 text-center">Or try one of these quick actions:</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {quickActions.map((action, index) => {
-                  const Icon = action.icon
+                  const Icon = action.icon;
                   return (
                     <Button
                       key={index}
@@ -109,28 +143,29 @@ export default function TeacherChatbotPage() {
                       <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
                       <span className="text-sm">{action.label}</span>
                     </Button>
-                  )
+                  );
                 })}
               </div>
             </div>
           )}
         </div>
 
-        {/* Input Area */}
         <div className="border-t border-border bg-card p-6">
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-3">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Ask me anything about teaching, curriculum, grading..."
+                onKeyDown={(e) => e.key === "Enter" && !isSending && handleSend()}
+                placeholder="Ask me to create a lesson plan, generate a quiz, or find resources..."
                 className="flex-1"
+                disabled={isSending}
               />
-              <Button onClick={handleSend} disabled={!input.trim()}>
-                <Send className="h-4 w-4" />
+              <Button onClick={handleSend} disabled={!input.trim() || isSending}>
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
+            {error && <p className="text-xs text-destructive mt-2 text-center">{error}</p>}
             <p className="text-xs text-muted-foreground mt-2 text-center">
               AI can make mistakes. Please verify important information.
             </p>
@@ -138,5 +173,8 @@ export default function TeacherChatbotPage() {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
+
+export default TeacherChatbotPage;
+

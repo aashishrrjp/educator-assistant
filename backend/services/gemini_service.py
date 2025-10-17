@@ -35,8 +35,8 @@ def create_curriculum_prompt(req, sample_content: str = None) -> str:
     - Subject: {req.subject}
     - Topics to include: {', '.join(req.topics)}
 
-    The output should be a structured markdown format with columns for:
-    'Topic', 'Sub-topics', 'Learning Objectives', 'Estimated Hours', and 'Suggested Activities'.
+    The output should be in a detailed bulletin format with columns for:
+    'Topic', 'Sub-topics', 'Learning Objectives', 'Estimated Hours', and 'Suggested Activities'. Dont include any messages like ofcourse i can help you, etc. Just provide the curriculum directly.
     """
     if sample_content:
         prompt += f"\n\nUse the following sample curriculum as a reference for style and structure:\n---SAMPLE---\n{sample_content}\n---END SAMPLE---"
